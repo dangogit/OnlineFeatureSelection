@@ -7,6 +7,8 @@ this_dir = os.path.dirname(os.path.abspath(__file__))
 
 moa_jar = os.path.join(this_dir, "moa-pom.jar")
 
+sizeofag_jar = os.path.join(this_dir, "sizeofag-1.0.4.jar")
+
 classifiers_db = {
    "ABFS-NB": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -l bayes.NaiveBayes -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D) -g 0.7 -m) -s (ArffFileStream -f input_file) -d output_file",
    "ABFS-HT": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D) -g 0.7 -m) -s (ArffFileStream -f input_file) -d output_file",
@@ -23,10 +25,10 @@ data_db = {
    "SPAM": ""}
 
 
-def run(moa_jar_path, command, input_path, output_path):
+def run(moa_jar_path, size_of_jar_path, command, input_path, output_path):
     args = command.replace("input_file", input_path).replace("output_file", output_path)
 
-    cmd = f'java -cp {moa_jar_path} moa.DoTask {args}'
+    cmd = f'java -cp {moa_jar_path} -javaagent:{size_of_jar_path}  moa.DoTask {args}'
 
     print(f"Running the command: {cmd}")
     print(subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read())
@@ -39,8 +41,8 @@ def run_simulations(num_of_tests):
             for data in data_db.keys():
                 if data_db[data] == "":
                     continue
-                output_path = os.path.join(this_dir, f"{classifier}_{data}_{i}")
-                run(moa_jar, classifiers_db[classifier], data_db[data], output_path)
+                output_path = os.path.join(this_dir, f"{classifier}_{data}_{i}.csv")
+                run(moa_jar, sizeofag_jar, classifiers_db[classifier], data_db[data], output_path)
                 res_dict = pd.read_csv(output_path)
                 avg_correct = np.mean(res_dict['classifications correct (percent)'])
                 total_correct+=avg_correct
