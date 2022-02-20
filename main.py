@@ -1,5 +1,7 @@
 import subprocess
 import os
+import pandas as pd
+import numpy as np
 
 this_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -31,6 +33,7 @@ def run(moa_jar_path, command, input_path, output_path):
 
 
 def run_simulations(num_of_tests):
+    total_correct=0
     for i in range(1, num_of_tests+1):
         for classifier in classifiers_db.keys():
             for data in data_db.keys():
@@ -38,6 +41,12 @@ def run_simulations(num_of_tests):
                     continue
                 output_path = os.path.join(this_dir, f"{classifier}_{data}_{i}")
                 run(moa_jar, classifiers_db[classifier], data_db[data], output_path)
+                res_dict = pd.read_csv(output_path)
+                avg_correct = np.mean(res_dict['classifications correct (percent)'])
+                total_correct+=avg_correct
+
+
+
 
 
 run_simulations(1)
