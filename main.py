@@ -18,7 +18,7 @@ classifiers_db = {
    "HT": "EvaluatePrequential -l (trees.HoeffdingTree -g 100) -s (ArffFileStream -f input_file) -d output_file"}
 
 data_db = {
-   "COVTYPE": os.path.join(this_dir, "covtype.arff"),
+   "COVTYPE": os.path.join(this_dir, 'Data', "covtype.arff"),
    "IADS": "",
    "NOMAO": "",
    "PAMAP2": "",
