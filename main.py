@@ -2,6 +2,7 @@ import subprocess
 import os
 import pandas as pd
 import numpy as np
+import csv
 
 this_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -66,8 +67,9 @@ def run_simulations1(num_of_tests):
             result[classifier + '-' + data] = total/num_of_tests
 
     print(result)
-    df = pd.from_dict(result, orient='columns')
-    df.to_csv(os.path.join(this_dir, 'result.csv'))
+    with open(os.path.join(this_dir, 'result.csv'), 'w') as f:
+        for key in result.keys():
+            f.write("%s, %s\n" % (key, result[key]))
 
 
 if __name__ == "__main__":
