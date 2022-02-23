@@ -20,10 +20,10 @@ classifiers_db = {
 
 data_db = {
    "COVTYPE": os.path.join(this_dir, 'Data', "covtype.arff"),
-   "IADS": "",
-   "NOMAO": "",
+   "IADS": os.path.join(this_dir, 'Data', "ad-dataset.arff"),
+   "NOMAO": os.path.join(this_dir, 'Data', "Nomao.arff"),
    "PAMAP2": "",
-   "SPAM": ""}
+   "SPAM": os.path.join(this_dir, 'Data', "spambase.arff")}
 
 result = {}
 
@@ -64,7 +64,10 @@ def run_simulations1(num_of_tests):
                     df = pd.read_csv(output_path)
                     total += df['classifications correct (percent)'].mean()
             result[classifier + '-' + data] = total/num_of_tests
+
     print(result)
+    df = pd.from_dict(result, orient='columns')
+    df.to_csv(os.path.join(this_dir, 'result.csv'))
 
 
 if __name__ == "__main__":
