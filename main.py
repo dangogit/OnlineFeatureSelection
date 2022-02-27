@@ -12,19 +12,20 @@ sizeofag_jar = os.path.join(this_dir, "sizeofag-1.0.4.jar")
 
 classifiers_db = {
    "ABFS-NB": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -l bayes.NaiveBayes -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D) -g 0.7 -m) -s (ArffFileStream -f input_file) -d output_file",
-   "ABFS-HT": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D) -g 0.7 -m) -s (ArffFileStream -f input_file) -d output_file",
-   "ABFS-KNN": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -l (lazy.kNN -k 500) -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D) -g 0.7 -m) -s (ArffFileStream -f input_file) -d output_file",
-   "NB": "EvaluatePrequential -l bayes.NaiveBayes -s (ArffFileStream -f input_file) -d output_file",
-   "KNN": "EvaluatePrequential -l (lazy.kNN -k 500) -s (ArffFileStream -f input_file) -d output_file",
-   "HT": "EvaluatePrequential -l (trees.HoeffdingTree -g 100) -s (ArffFileStream -f input_file) -d output_file"
-    }
+   # "ABFS-HT": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D) -g 0.7 -m) -s (ArffFileStream -f input_file) -d output_file",
+   # "ABFS-KNN": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -l (lazy.kNN -k 500) -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D) -g 0.7 -m) -s (ArffFileStream -f input_file) -d output_file",
+   # "NB": "EvaluatePrequential -l bayes.NaiveBayes -s (ArffFileStream -f input_file) -d output_file",
+   # "KNN": "EvaluatePrequential -l (lazy.kNN -k 500) -s (ArffFileStream -f input_file) -d output_file",
+   # "HT": "EvaluatePrequential -l (trees.HoeffdingTree -g 100) -s (ArffFileStream -f input_file) -d output_file"
+}
 
 data_db = {
-   "COVTYPE": os.path.join(this_dir, 'Data', "covtype.arff"),
-   "IADS": os.path.join(this_dir, 'Data', "ad-dataset.arff"),
+   # "COVTYPE": os.path.join(this_dir, 'Data', "covtype.arff"),
+   # "IADS": os.path.join(this_dir, 'Data', "ad-dataset.arff"),
    "NOMAO": os.path.join(this_dir, 'Data', "Nomao.arff"),
-   "PAMAP2": "",
-   "SPAM": os.path.join(this_dir, 'Data', "spambase.arff")}
+   # "PAMAP2": "",
+   # "SPAM": os.path.join(this_dir, 'Data', "spambase.arff")
+}
 
 result = {}
 
@@ -71,8 +72,14 @@ def run_simulations1(num_of_tests):
         for key in result.keys():
             f.write("%s, %s\n" % (key, result[key]))
 
+def suffle_dataset(file_name="Data/covtype.csv"):
+    df = pd.read_csv(file_name)
+    df = df.iloc[np.random.permutation(len(df))]
+    output_path = os.path.join(this_dir, 'Data', "covtype1.csv")
+    df.to_csv(output_path)
 
 if __name__ == "__main__":
-    run_simulations1(30)
+    # run_simulations1(30)
+    suffle_dataset()
 
 
