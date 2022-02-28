@@ -3,11 +3,12 @@ import os
 import pandas as pd
 import numpy as np
 import csv
+from scipy.io.arff import loadarff
+import arff
 
+# Globals:
 this_dir = os.path.dirname(os.path.abspath(__file__))
-
 moa_jar = os.path.join(this_dir, "moa-pom.jar")
-
 sizeofag_jar = os.path.join(this_dir, "sizeofag-1.0.4.jar")
 
 classifiers_db = {
@@ -20,11 +21,11 @@ classifiers_db = {
 }
 
 data_db = {
-   # "COVTYPE": os.path.join(this_dir, 'Data', "covtype.arff"),
-   # "IADS": os.path.join(this_dir, 'Data', "ad-dataset.arff"),
-   "NOMAO": os.path.join(this_dir, 'Data', "Nomao.arff"),
-   # "PAMAP2": "",
-   # "SPAM": os.path.join(this_dir, 'Data', "spambase.arff")
+    "covtype": os.path.join(this_dir, 'Data', "covtype.arff"),
+    "IADS": os.path.join(this_dir, 'Data', "ad-dataset.arff"),
+    "Nomao": os.path.join(this_dir, 'Data', "Nomao.arff"),
+    "PAMAP2": "",
+    "SPAM": os.path.join(this_dir, 'Data', "spambase.arff")
 }
 
 result = {}
@@ -37,6 +38,7 @@ def run(moa_jar_path, size_of_jar_path, command, input_path, output_path):
 
     print(f"Running the command: {cmd}")
     print(subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read())
+
 
 def run_simulations(num_of_tests):
     total_correct=0
@@ -52,25 +54,30 @@ def run_simulations(num_of_tests):
                 # total_correct+=avg_correct
 
 
-
 def run_simulations1(num_of_tests):
-    for classifier in classifiers_db.keys(): #ABFS-NB
-        for data in data_db.keys(): #COVTYPE
-            if data_db[data] == "":
+    for classifier in classifiers_db.keys():
+        for dataset_name in data_db.keys():
+            if data_db[dataset_name] == "":
                 continue
             else:
                 total = 0
                 for i in range(1, num_of_tests+1):
-                    output_path = os.path.join(this_dir, 'Results', f"{classifier}_{data}_{i}.csv")
-                    run(moa_jar, sizeofag_jar, classifiers_db[classifier], data_db[data], output_path)
+                    output_path = os.path.join(this_dir, 'Results', f"{classifier}_{dataset_name}_{i}.csv")
+
+                    # Shuffle data:
+                    shuffle_output_path = os.path.join(os.path.dirname(data_db[dataset_name]), 'Shuffle', '{}_{}.arff'.format(dataset_name, i))
+                    arff_shuffle(input_path=data_db[dataset_name], relation=dataset_name, output_path=shuffle_output_path)
+
+                    run(moa_jar, sizeofag_jar, classifiers_db[classifier], shuffle_output_path, output_path)
                     df = pd.read_csv(output_path)
                     total += df['classifications correct (percent)'].mean()
-            result[classifier + '-' + data] = total/num_of_tests
+            result[classifier + '-' + dataset_name] = total/num_of_tests
 
     print(result)
     with open(os.path.join(this_dir, 'result.csv'), 'w') as f:
         for key in result.keys():
             f.write("%s, %s\n" % (key, result[key]))
+
 
 def suffle_dataset(file_name="Data/covtype.csv"):
     df = pd.read_csv(file_name)
@@ -78,8 +85,19 @@ def suffle_dataset(file_name="Data/covtype.csv"):
     output_path = os.path.join(this_dir, 'Data', "covtype1.csv")
     df.to_csv(output_path)
 
+
+def arff_shuffle(input_path, relation, output_path):
+    raw_data = loadarff(input_path)
+    df_data = pd.DataFrame(raw_data[0])
+    df_shuffle = df_data.sample(frac=1).reset_index(drop=True)
+
+    arff.dump(output_path
+              , df_shuffle.values
+              , relation=relation
+              , names=df_shuffle.columns)
+
 if __name__ == "__main__":
-    # run_simulations1(30)
-    suffle_dataset()
+    run_simulations1(30)
+    # suffle_dataset()
 
 
