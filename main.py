@@ -96,6 +96,7 @@ def arff_shuffle(input_path, relation, output_path):
     raw_data = loadarff(input_path)
     df_data = pd.DataFrame(raw_data[0])
     df_shuffle = df_data.sample(frac=1).reset_index(drop=True)
+    df_shuffle[list(df_shuffle.columns)] = df_shuffle[list(df_shuffle.columns)].fillna(0.0).applymap(np.int64)
 
     arff.dump(output_path
               , df_shuffle.values
