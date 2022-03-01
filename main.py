@@ -5,6 +5,7 @@ import numpy as np
 import csv
 from scipy.io.arff import loadarff
 import arff
+import random
 
 # Globals:
 this_dir = os.path.dirname(os.path.abspath(__file__))
@@ -72,9 +73,9 @@ def run_simulations1(num_of_tests):
 
                     # Shuffle data:
                     shuffle_output_path = os.path.join(this_dir, 'Data', 'Shuffle', '{}_{}_{}.arff'.format(dataset_name, classifier, i))
-                    arff_shuffle(input_path=data_db[dataset_name], relation=dataset_name, output_path=shuffle_output_path)
+                    data_shuffle(input_path=data_db[dataset_name], output_path=shuffle_output_path)
 
-                    run(moa_jar, sizeofag_jar, classifiers_db[classifier], shuffle_output_path, output_path)
+                    run(moa_jar, sizeofag_jar, classifiers_db[classifier], data_db[dataset_name], output_path)
                     df = pd.read_csv(output_path)
                     total += df['classifications correct (percent)'].mean()
             result[classifier + '-' + dataset_name] = total/num_of_tests
@@ -92,16 +93,17 @@ def suffle_dataset(file_name="Data/covtype.csv"):
     df.to_csv(output_path)
 
 
-def arff_shuffle(input_path, relation, output_path):
-    raw_data = loadarff(input_path)
-    df_data = pd.DataFrame(raw_data[0])
-    df_shuffle = df_data.sample(frac=1).reset_index(drop=True)
-    df_shuffle[list(df_shuffle.columns)] = df_shuffle[list(df_shuffle.columns)].fillna(0.0).applymap(np.int64)
+def data_shuffle(input_path, output_path):
+    fid = open(input_path, "r")
+    li = fid.readlines()
+    fid.close()
 
-    arff.dump(output_path
-              , df_shuffle.values
-              , relation=relation
-              , names=df_shuffle.columns)
+    random.shuffle(li)
+
+    fid = open(output_path, "w")
+    fid.writelines(li)
+    fid.close()
+
 
 if __name__ == "__main__":
     run_simulations1(30)
