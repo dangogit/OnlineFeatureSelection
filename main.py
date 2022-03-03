@@ -99,9 +99,9 @@ def data_shuffle(input_path, output_path):
 
     data_index = li.index('@data\n')
 
-    meta_data = li[:data_index+7]
+    meta_data = li[:data_index+1]
 
-    data = li[data_index+7:]
+    data = li[data_index+1:]
     random.shuffle(data)
 
     fid = open(output_path, "w")
