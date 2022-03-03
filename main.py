@@ -74,7 +74,7 @@ def run_simulations1(num_of_tests):
                     shuffle_output_path = os.path.join(this_dir, 'Data', 'Shuffle', '{}_{}_{}.arff'.format(dataset_name, classifier, i))
                     data_shuffle(input_path=data_db[dataset_name], output_path=shuffle_output_path)
 
-                    run(moa_jar, sizeofag_jar, classifiers_db[classifier], data_db[dataset_name], output_path)
+                    run(moa_jar, sizeofag_jar, classifiers_db[classifier], shuffle_output_path, output_path)
                     df = pd.read_csv(output_path)
                     total += df['classifications correct (percent)'].mean()
             result[classifier + '-' + dataset_name] = total/num_of_tests
@@ -99,10 +99,13 @@ def data_shuffle(input_path, output_path):
 
     data_index = li.index('@data\n')
 
-    random.shuffle(li[data_index+7:])
+    meta_data = li[:data_index+7]
+
+    data = li[data_index+7:]
+    random.shuffle(data)
 
     fid = open(output_path, "w")
-    fid.writelines(li)
+    fid.writelines(meta_data+data)
     fid.close()
 
 
