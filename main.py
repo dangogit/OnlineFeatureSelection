@@ -2,9 +2,6 @@ import subprocess
 import os
 import pandas as pd
 import numpy as np
-import csv
-from scipy.io.arff import loadarff
-import arff
 import random
 
 # Globals:
@@ -100,7 +97,9 @@ def data_shuffle(input_path, output_path):
     li = fid.readlines()
     fid.close()
 
-    random.shuffle(li)
+    data_index = li.index('@data\n')
+
+    random.shuffle(li[data_index+7:])
 
     fid = open(output_path, "w")
     fid.writelines(li)
