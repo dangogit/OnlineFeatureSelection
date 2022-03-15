@@ -1,5 +1,5 @@
 import time
-
+from ABFS import abfs
 import pandas as pd
 import streamlit as st
 import hydralit_components as hc
@@ -94,6 +94,7 @@ if uploaded_file is not None and run:
         st.write(
             'Running ABFS'
         )
+        abfs.parameters(data=uploaded_file, classifier=OL_Algorithm)
 
     elif OFS_Algorithm == 'FIRES':
         st.write(
