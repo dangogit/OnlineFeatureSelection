@@ -90,6 +90,15 @@ if uploaded_file is not None and run:
     st.write(
         'beginning calculations... please hold on'
     )
+    if OFS_Algorithm == 'ABFS':
+        st.write(
+            'Running ABFS'
+        )
+
+    elif OFS_Algorithm == 'FIRES':
+        st.write(
+            'Running FIRES'
+        )
     with hc.HyLoader('', hc.Loaders.pulse_bars):
         time.sleep(10)
         st.write("YEY!")
