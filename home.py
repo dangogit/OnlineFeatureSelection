@@ -1,5 +1,6 @@
 import time
 from ABFS import abfs
+from Fires import FIRES
 import pandas as pd
 import streamlit as st
 import hydralit_components as hc
@@ -45,20 +46,17 @@ with st.sidebar.subheader('Upload your file'):
     uploaded_file = st.sidebar.file_uploader("Please upload a file of type: xlsx, csv", type=["xlsx", "csv","arff"])
 
     OL_Algorithm = st.sidebar.selectbox("Choose OL Algorithm",
-                                        ["K-NN", "Perceptron Mask (ANN)", "Random Forest", "Naive Bayes"])
-    if OL_Algorithm == "K-NN":
+                                        ["KNN", "Perceptron Mask (ANN)", "Hoeffding Tree", "Naive Bayes"])
+    classifier_parameters = {}
+    if OL_Algorithm == "KNN":
         n_neighbors = st.sidebar.slider("select size of K", 0, 10)
-        windows_size = st.sidebar.slider("select max windows size", 0, 1000)
         leaf_size = st.sidebar.slider("select size of leaf size", 0, 100)
+        classifier_parameters['KNN'] = {'n_neighbors': n_neighbors, 'leaf_size': leaf_size}
     elif OL_Algorithm == "Perceptron Mask (ANN)":
         alpha = st.sidebar.slider("select size of alpha", 0.001, 0.99)
         max_iter = st.sidebar.slider("select max num of iterations", 1, 1000)
         random_state = st.sidebar.slider("select random state", 0, 100)
-    elif OL_Algorithm == "Random Forest":
-        n_estimators = st.sidebar.slider("select num of estimators", 1, 10)
-        lambda_value = st.sidebar.slider("select lambda value", 1, 10)
-        split_confidence = st.sidebar.slider("select split conf", 0.001, 0.1)
-        tie_threshold = st.sidebar.slider("select tie threshold", 0.001, 0.1)
+        classifier_parameters['Perceptron Mask (ANN)'] = {'alpha': alpha, 'max_iter': max_iter, 'random_state': random_state}
 
     OFS_Algorithm = st.sidebar.selectbox("Choose OFS Algorithm", ["ABFS", "FIRES"])
     feature_precent = st.sidebar.number_input("Enter feature precentage between 0.01 - 100", min_value=0.01,
@@ -94,12 +92,13 @@ if uploaded_file is not None and run:
         st.write(
             'Running ABFS'
         )
-        abfs.parameters(data=uploaded_file, classifier=OL_Algorithm)
+        abfs.parameters(classifier_name=OL_Algorithm, classifier_parameters=classifier_parameters, data=uploaded_file, target_index=target_index)
 
     elif OFS_Algorithm == 'FIRES':
         st.write(
             'Running FIRES'
         )
+        FIRES.apply_fires(classifier_name=OL_Algorithm, classifier_parameters=classifier_parameters, data=uploaded_file, target_index=target_index)
     with hc.HyLoader('', hc.Loaders.pulse_bars):
         time.sleep(10)
         st.write("YEY!")

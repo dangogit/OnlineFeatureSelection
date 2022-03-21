@@ -174,15 +174,8 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 batch_sizes = [25, 50, 75, 100]
 fractions = [0.1, 0.15, 0.2]
 
-classifiers = {
-        "NEURAL-NETWORKS": PerceptronMask(),
-        "KNN": KNNClassifier(n_neighbors=10),
-        "HT": HoeffdingTreeClassifier(),
-        "NB": GaussianNB()
-    }
 
-
-def apply_fires(classifier_name, df_name, tgt_index, epochs=1):
+def apply_fires(classifier_name, classifier_parameters, data, target_index, epochs=1):
     final_stab_lst = []
     final_acc_lst = []
 
@@ -191,11 +184,24 @@ def apply_fires(classifier_name, df_name, tgt_index, epochs=1):
             # Load data as scikit-multiflow FileStream
             # NOTE: FIRES accepts only numeric values. Please one-hot-encode or factorize string/char variables
             # Additionally, we suggest users to normalize all features, e.g. by using scikit-learn's MinMaxScaler()
-            stream = FileStream(df_name, target_idx=tgt_index)
+            stream = FileStream(data, target_idx=target_index)
             stream.prepare_for_use()
 
             # Initial fit of the predictive model
-            predictor = classifiers[classifier_name]
+
+            predictor = GaussianNB()
+
+            if classifier_name == "KNN":
+                predictor = KNNClassifier(n_neighbors=classifier_parameters[classifier_name]['n_neighbors'], leaf_size=classifier_parameters[classifier_name]['leaf_size'])
+            elif classifier_name == "Perceptron Mask (ANN)":
+                predictor = PerceptronMask(alpha=classifier_parameters[classifier_name]['alpha'], max_iter=classifier_parameters[classifier_name]['max_iter'], random_state=classifier_parameters[classifier_name]['random_state'])
+            elif classifier_name == "Hoeffding Tree":
+                predictor = HoeffdingTreeClassifier()
+            elif classifier_name == "Naive Bayes":
+                predictor = GaussianNB()
+            else:
+                print(f"Classifier {classifier_name} not supported.")
+
             x, y = stream.next_sample(batch_size=batch_size)
             predictor.partial_fit(x, y, stream.target_values)
 
@@ -274,5 +280,5 @@ def apply_fires(classifier_name, df_name, tgt_index, epochs=1):
     print(f'Final avg acc score: {sum(final_acc_lst) / len(final_acc_lst)}')
     print(f'Final avg stab score: {sum(final_stab_lst) / len(final_stab_lst)}')
 
-if __name__ == "__main__":
-    apply_fires("NEURAL-NETWORKS", df_name='/Users/samuelbenichou/Downloads/normalize 2/electricity_data.csv', tgt_index=0, epochs=1)
+#if __name__ == "__main__":
+    # apply_fires("NEURAL-NETWORKS", data='/Users/samuelbenichou/Downloads/normalize 2/electricity_data.csv', target_index=0, epochs=1)
