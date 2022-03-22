@@ -5,7 +5,6 @@ from skmultiflow.data import FileStream
 from skmultiflow.neural_networks import PerceptronMask
 from sklearn.metrics import accuracy_score
 
-import stability as st
 import numpy as np
 from warnings import warn
 from scipy.stats import norm
@@ -13,6 +12,11 @@ from sklearn.preprocessing import MinMaxScaler
 import pandas as pd
 from scipy.io import arff
 import warnings
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+import stability
 
 
 # import Stability as st
@@ -254,8 +258,8 @@ def apply_fires(classifier_name, classifier_parameters, data, target_index, epoc
 
                 # Sum all the stabilty scores (shifting window = 10)
                 if len(stability_mat) >= 10:
-                    sum_stab = sum_stab + st.getStability(stability_mat[start_window:end_window])
-                    # print(st.getStability(stability_mat[start_window:end_window]))
+                    sum_stab = sum_stab + stability.getStability(stability_mat[start_window:end_window])
+                    # print(stability.getStability(stability_mat[start_window:end_window]))
                     start_window += 1
                     end_window += 1
                     stability_counter += 1
