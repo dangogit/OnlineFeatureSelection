@@ -1,5 +1,5 @@
 import time
-from ABFS import abfs
+from ABFS.ABFS import ABFS
 from Fires import FIRES
 import pandas as pd
 import streamlit as st
@@ -92,7 +92,8 @@ if uploaded_file is not None and run:
         st.write(
             'Running ABFS'
         )
-        abfs.parameters(classifier_name=OL_Algorithm, classifier_parameters=classifier_parameters, data=uploaded_file, target_index=target_index)
+        abfs = ABFS()
+        abfs.parameters(classifier_name=OL_Algorithm, classifier_parameters=classifier_parameters, data=uploaded_file.name, target_index=target_index)
 
     elif OFS_Algorithm == 'FIRES':
         st.write(
