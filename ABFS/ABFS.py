@@ -4,6 +4,8 @@ import pandas as pd
 import numpy as np
 import random
 
+from main import this_dir
+
 
 class ABFS():
     # Globals:
@@ -58,7 +60,7 @@ class ABFS():
                 f.write("%s, %s\n" % (key, self.result[key]))
 
     def data_shuffle(self, input_path, output_path):
-        fid = open(input_path, "r")
+        fid = open(os.path.join(this_dir, 'Data', input_path), "r")
         li = fid.readlines()
         fid.close()
 
