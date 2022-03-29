@@ -9,11 +9,11 @@ import numpy as np
 from warnings import warn
 from scipy.stats import norm
 from sklearn.preprocessing import MinMaxScaler
-import pandas as pd
-from scipy.io import arff
 import warnings
 import sys
 import os
+
+from main import this_dir
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import stability
@@ -61,8 +61,8 @@ class FIRES:
         if self.model == 'probit' and tuple(target_values) != (-1, 1):
             if len(np.unique(target_values)) == 2:
                 self.model_param['probit'] = True  # Indicates that we need to encode the target variable into {-1,1}
-                warn('FIRES WARNING: The target variable will be encoded as: {} = -1, {} = 1'.format(
-                    self.target_values[0], self.target_values[1]))
+                # warn('FIRES WARNING: The target variable will be encoded as: {} = -1, {} = 1'.format(
+                #     self.target_values[0], self.target_values[1]))
             else:
                 raise ValueError('The target variable y must be binary.')
 
@@ -188,7 +188,7 @@ def apply_fires(classifier_name, classifier_parameters, data, target_index, epoc
             # Load data as scikit-multiflow FileStream
             # NOTE: FIRES accepts only numeric values. Please one-hot-encode or factorize string/char variables
             # Additionally, we suggest users to normalize all features, e.g. by using scikit-learn's MinMaxScaler()
-            stream = FileStream(data, target_idx=target_index)
+            stream = FileStream(os.path.join(this_dir,data), target_idx=target_index)
             stream.prepare_for_use()
 
             # Initial fit of the predictive model
@@ -273,16 +273,14 @@ def apply_fires(classifier_name, classifier_parameters, data, target_index, epoc
             # Average accuracy  and stability
             avg_acc = sum_acc / count_time_steps
             avg_stab = sum_stab / (stability_counter)
-            print(f'avg acc score: {avg_acc}')
-            print(f'stability score: {avg_stab}')
+            # print(f'avg acc score: {avg_acc}')
+            # print(f'stability score: {avg_stab}')
 
             final_stab_lst.append(avg_stab)
             final_acc_lst.append(avg_acc)
             # Restart the FileStream
             stream.restart()
 
-    print(f'Final avg acc score: {sum(final_acc_lst) / len(final_acc_lst)}')
-    print(f'Final avg stab score: {sum(final_stab_lst) / len(final_stab_lst)}')
-
-#if __name__ == "__main__":
-    # apply_fires("NEURAL-NETWORKS", data='/Users/samuelbenichou/Downloads/normalize 2/electricity_data.csv', target_index=0, epochs=1)
+    # print(f'Final avg acc score: {sum(final_acc_lst) / len(final_acc_lst)}')
+    # print(f'Final avg stab score: {sum(final_stab_lst) / len(final_stab_lst)}')
+    return [sum(final_acc_lst) / len(final_acc_lst), sum(final_stab_lst) / len(final_stab_lst)]
