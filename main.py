@@ -11,21 +11,21 @@ sizeofag_jar = os.path.join(this_dir, "sizeofag-1.0.4.jar")
 
 classifiers_db = {
    "ABFS-NB": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -l bayes.NaiveBayes -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D) -g 0.7 -m) -s (ArffFileStream -f input_file) -d output_file",
-   "ABFS-HT": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D) -g 0.7 -m) -s (ArffFileStream -f input_file) -d output_file",
-   "ABFS-KNN": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -l (lazy.kNN -k 500) -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D) -g 0.7 -m) -s (ArffFileStream -f input_file) -d output_file",
-   "ABFS-HAT": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -l trees.HoeffdingAdaptiveTree -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D)) -s (ArffFileStream -f input_file) -d output_file",
-   "NB": "EvaluatePrequential -l bayes.NaiveBayes -s (ArffFileStream -f input_file) -d output_file",
-   "KNN": "EvaluatePrequential -l (lazy.kNN -k 500) -s (ArffFileStream -f input_file) -d output_file",
-   "HT": "EvaluatePrequential -l (trees.HoeffdingTree -g 100) -s (ArffFileStream -f input_file) -d output_file",
-   "HAT": "EvaluatePrequential -l trees.HoeffdingAdaptiveTree -s (ArffFileStream -f input_file) -d output_file",
+   # "ABFS-HT": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D) -g 0.7 -m) -s (ArffFileStream -f input_file) -d output_file",
+   # "ABFS-KNN": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -l (lazy.kNN -k 500) -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D) -g 0.7 -m) -s (ArffFileStream -f input_file) -d output_file",
+   # "ABFS-HAT": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -l trees.HoeffdingAdaptiveTree -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D)) -s (ArffFileStream -f input_file) -d output_file",
+   # "NB": "EvaluatePrequential -l bayes.NaiveBayes -s (ArffFileStream -f input_file) -d output_file",
+   # "KNN": "EvaluatePrequential -l (lazy.kNN -k 500) -s (ArffFileStream -f input_file) -d output_file",
+   # "HT": "EvaluatePrequential -l (trees.HoeffdingTree -g 100) -s (ArffFileStream -f input_file) -d output_file",
+   # "HAT": "EvaluatePrequential -l trees.HoeffdingAdaptiveTree -s (ArffFileStream -f input_file) -d output_file",
 }
 
 data_db = {
-    "covtype": os.path.join(this_dir, 'Data', "covtype.arff"),
-    "IADS": os.path.join(this_dir, 'Data', "ad-dataset.arff"),
+    # "covtype": os.path.join(this_dir, 'Data', "covtype.arff"),
+    # "IADS": os.path.join(this_dir, 'Data', "ad-dataset.arff"),
     "Nomao": os.path.join(this_dir, 'Data', "Nomao.arff"),
-    "PAMAP2": "",
-    "SPAM": os.path.join(this_dir, 'Data', "spambase.arff")
+    # "PAMAP2": "",
+    # "SPAM": os.path.join(this_dir, 'Data', "spambase.arff")
 }
 
 result = {}
@@ -38,21 +38,6 @@ def run(moa_jar_path, size_of_jar_path, command, input_path, output_path):
 
     print(f"Running the command: {cmd}")
     print(subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read())
-
-
-def run_simulations(num_of_tests):
-    total_correct=0
-    for i in range(1, num_of_tests+1):
-        for classifier in classifiers_db.keys():
-            for data in data_db.keys():
-                if data_db[data] == "":
-                    continue
-                output_path = os.path.join(this_dir, 'Results', f"{classifier}_{data}_{i}.csv")
-                run(moa_jar, sizeofag_jar, classifiers_db[classifier], data_db[data], output_path)
-                # res_dict = pd.read_csv(output_path)
-                # avg_correct = np.mean(res_dict['classifications correct (percent)'])
-                # total_correct+=avg_correct
-
 
 def run_simulations1(num_of_tests):
     if not os.path.exists(os.path.join(this_dir, 'Results')):
@@ -108,9 +93,12 @@ def data_shuffle(input_path, output_path):
     fid.writelines(meta_data+data)
     fid.close()
 
+def run_main():
+    run_simulations1(1)
+    return result
 
 if __name__ == "__main__":
-    run_simulations1(30)
+    run_simulations1(1)
     # suffle_dataset()
 
 

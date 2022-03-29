@@ -4,6 +4,7 @@ from Fires import FIRES
 import pandas as pd
 import streamlit as st
 import hydralit_components as hc
+import main
 
 st.set_option('deprecation.showPyplotGlobalUse', False)
 st.set_page_config(page_title="Final Project", page_icon="🔍", layout="wide")
@@ -92,14 +93,17 @@ if uploaded_file is not None and run:
         st.write(
             'Running ABFS'
         )
-        abfs = ABFS()
-        abfs.parameters(classifier_name=OL_Algorithm, classifier_parameters=classifier_parameters, data=uploaded_file.name, target_index=target_index)
+        res = main.run_main()
+        print(res)
+        # abfs = ABFS()
+        # abfs.parameters(classifier_name=OL_Algorithm, classifier_parameters=classifier_parameters, data=uploaded_file.name, target_index=target_index)
 
     elif OFS_Algorithm == 'FIRES':
         st.write(
             'Running FIRES'
         )
-        FIRES.apply_fires(classifier_name=OL_Algorithm, classifier_parameters=classifier_parameters, data=uploaded_file, target_index=target_index)
+        res = FIRES.apply_fires(classifier_name=OL_Algorithm, classifier_parameters=classifier_parameters, data=uploaded_file.name, target_index=target_index)
+        print(res)
     with hc.HyLoader('', hc.Loaders.pulse_bars):
         time.sleep(10)
         st.write("YEY!")
