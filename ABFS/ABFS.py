@@ -49,17 +49,21 @@ class ABFS():
 
         # Shuffle data:
         shuffle_output_path = os.path.join(self.this_dir, 'Data', 'Shuffle', '{}.arff'.format(dataset_name))
+        try:
+            self.data_shuffle(input_path=data, output_path=shuffle_output_path)
+            self.run(self.moa_jar, self.sizeofag_jar, self.classifiers_db[classifier_name], shuffle_output_path, output_path)
+            df = pd.read_csv(output_path)
+            self.result['avg_acc'] = df['classifications correct (percent)'].mean()
+            self.result['evaluation_time'] = df['evaluation time (cpu seconds)'].sum()
+            self.result['avg_stab'] = ""
 
-        self.data_shuffle(input_path=data, output_path=shuffle_output_path)
-
-        self.run(self.moa_jar, self.sizeofag_jar, self.classifiers_db[classifier_name], shuffle_output_path, output_path)
-        df = pd.read_csv(output_path)
-        self.result['avg_acc'] = df['classifications correct (percent)'].mean()
-        self.result['evaluation_time'] = df['evaluation time(cpu seconds)'].sum()
-        self.result['avg_stab'] = ""
-
-        os.remove(output_path)
-        os.remove(shuffle_output_path)
+        except Exception as e:
+            print(e)
+        finally:
+            if os.path.isfile(output_path):
+                os.remove(output_path)
+            if os.path.isfile(shuffle_output_path):
+                os.remove(shuffle_output_path)
         return self.result
 
         # with open(os.path.join(self.this_dir, 'result.csv'), 'w') as f:
