@@ -32,7 +32,9 @@ class ABFS():
         cmd = f'java -cp {moa_jar_path} -javaagent:{size_of_jar_path}  moa.DoTask {args}'
 
         print(f"Running the command: {cmd}")
-        print(subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read())
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+        process.wait()
+        print(process.stdout.read())
 
     def parameters(self, classifier_name, classifier_parameters, data, target_index):
         if not os.path.exists(os.path.join(self.this_dir, 'Results')):
@@ -41,13 +43,13 @@ class ABFS():
         if not os.path.exists(os.path.join(self.this_dir, 'Data', 'Shuffle')):
             os.makedirs(os.path.join(self.this_dir, 'Data', 'Shuffle'))
 
-        dataset_name = os.path.basename(data)
+        dataset_name = os.path.basename(data).split('.')[0].strip()
 
-        output_path = os.path.join(self.this_dir, 'Results', f"{classifier_name}_{dataset_name}.csv")
+        output_path = os.path.join(self.this_dir, 'Results', f"{dataset_name}.csv")
 
         # Shuffle data:
-        shuffle_output_path = os.path.join(self.this_dir, 'Data', 'Shuffle',
-                                           '{}_{}.arff'.format(dataset_name, classifier_name))
+        shuffle_output_path = os.path.join(self.this_dir, 'Data', 'Shuffle', '{}.arff'.format(dataset_name))
+
         self.data_shuffle(input_path=data, output_path=shuffle_output_path)
 
         self.run(self.moa_jar, self.sizeofag_jar, self.classifiers_db[classifier_name], shuffle_output_path, output_path)

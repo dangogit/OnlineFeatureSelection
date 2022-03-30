@@ -93,10 +93,10 @@ if uploaded_file is not None and run:
         st.write(
             'Running ABFS'
         )
-        res = main.run_main()
-        print(res)
-        # abfs = ABFS()
-        # abfs.parameters(classifier_name=OL_Algorithm, classifier_parameters=classifier_parameters, data=uploaded_file.name, target_index=target_index)
+        # res = main.run_main()
+        # print(res)
+        abfs = ABFS()
+        abfs.parameters(classifier_name=OL_Algorithm, classifier_parameters=classifier_parameters, data=uploaded_file.name, target_index=target_index)
 
     elif OFS_Algorithm == 'FIRES':
         st.write(
