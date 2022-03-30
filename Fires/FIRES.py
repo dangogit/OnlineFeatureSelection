@@ -281,6 +281,6 @@ def apply_fires(classifier_name, classifier_parameters, data, target_index, epoc
             # Restart the FileStream
             stream.restart()
 
-    # print(f'Final avg acc score: {sum(final_acc_lst) / len(final_acc_lst)}')
-    # print(f'Final avg stab score: {sum(final_stab_lst) / len(final_stab_lst)}')
-    return [sum(final_acc_lst) / len(final_acc_lst), sum(final_stab_lst) / len(final_stab_lst)]
+    results_dict = {'avg_acc': sum(final_acc_lst) / len(final_acc_lst), 'avg_stab': sum(final_stab_lst) / len(final_stab_lst), 'evaluation_time': ''}
+    return results_dict
+

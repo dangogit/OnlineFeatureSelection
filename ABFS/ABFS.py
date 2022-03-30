@@ -54,12 +54,17 @@ class ABFS():
 
         self.run(self.moa_jar, self.sizeofag_jar, self.classifiers_db[classifier_name], shuffle_output_path, output_path)
         df = pd.read_csv(output_path)
-        self.result[classifier_name + '-' + dataset_name] = df['classifications correct (percent)'].mean()
-        print(self.result)
+        self.result['avg_acc'] = df['classifications correct (percent)'].mean()
+        self.result['evaluation_time'] = df['evaluation time(cpu seconds)'].sum()
+        self.result['avg_stab'] = ""
 
-        with open(os.path.join(self.this_dir, 'result.csv'), 'w') as f:
-            for key in self.result.keys():
-                f.write("%s, %s\n" % (key, self.result[key]))
+        os.remove(output_path)
+        os.remove(shuffle_output_path)
+        return self.result
+
+        # with open(os.path.join(self.this_dir, 'result.csv'), 'w') as f:
+        #     for key in self.result.keys():
+        #         f.write("%s, %s\n" % (key, self.result[key]))
 
     def data_shuffle(self, input_path, output_path):
         fid = open(os.path.join(this_dir, 'Data', input_path), "r")

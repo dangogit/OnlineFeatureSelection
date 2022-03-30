@@ -96,14 +96,14 @@ if uploaded_file is not None and run:
         # res = main.run_main()
         # print(res)
         abfs = ABFS()
-        abfs.parameters(classifier_name=OL_Algorithm, classifier_parameters=classifier_parameters, data=uploaded_file.name, target_index=target_index)
-
+        res = abfs.parameters(classifier_name=OL_Algorithm, classifier_parameters=classifier_parameters, data=uploaded_file.name, target_index=target_index)
+        st.write(res)
     elif OFS_Algorithm == 'FIRES':
         st.write(
             'Running FIRES'
         )
         res = FIRES.apply_fires(classifier_name=OL_Algorithm, classifier_parameters=classifier_parameters, data=uploaded_file.name, target_index=target_index)
-        print(res)
+        st.write(res)
     with hc.HyLoader('', hc.Loaders.pulse_bars):
         time.sleep(10)
         st.write("YEY!")
