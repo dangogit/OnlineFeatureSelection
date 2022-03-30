@@ -188,7 +188,7 @@ def apply_fires(classifier_name, classifier_parameters, data, target_index, epoc
             # Load data as scikit-multiflow FileStream
             # NOTE: FIRES accepts only numeric values. Please one-hot-encode or factorize string/char variables
             # Additionally, we suggest users to normalize all features, e.g. by using scikit-learn's MinMaxScaler()
-            stream = FileStream(os.path.join(this_dir,data), target_idx=target_index)
+            stream = FileStream(os.path.join(this_dir, 'Data', data), target_idx=target_index)
             stream.prepare_for_use()
 
             # Initial fit of the predictive model
