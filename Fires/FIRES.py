@@ -12,7 +12,7 @@ from sklearn.preprocessing import MinMaxScaler
 import warnings
 import sys
 import os
-
+import time
 from main import this_dir
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -182,9 +182,11 @@ fractions = [0.1, 0.15, 0.2]
 def apply_fires(classifier_name, classifier_parameters, data, target_index, epochs=1):
     final_stab_lst = []
     final_acc_lst = []
+    evaluation_time = []
 
     for batch_size in batch_sizes:
         for frac_selected_ftr in fractions:
+            start_time = time.time()
             # Load data as scikit-multiflow FileStream
             # NOTE: FIRES accepts only numeric values. Please one-hot-encode or factorize string/char variables
             # Additionally, we suggest users to normalize all features, e.g. by using scikit-learn's MinMaxScaler()
@@ -278,9 +280,10 @@ def apply_fires(classifier_name, classifier_parameters, data, target_index, epoc
 
             final_stab_lst.append(avg_stab)
             final_acc_lst.append(avg_acc)
+            evaluation_time.append(time.time() - start_time)
             # Restart the FileStream
             stream.restart()
 
-    results_dict = {'avg_acc': sum(final_acc_lst) / len(final_acc_lst), 'avg_stab': sum(final_stab_lst) / len(final_stab_lst), 'evaluation_time': ''}
+    results_dict = {'avg_acc': sum(final_acc_lst) / len(final_acc_lst), 'avg_stab': sum(final_stab_lst) / len(final_stab_lst), 'evaluation_time': sum(evaluation_time)}
     return results_dict
 
