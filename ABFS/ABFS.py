@@ -17,17 +17,17 @@ class ABFS():
     sizeofag_jar = os.path.join(this_dir, "sizeofag-1.0.4.jar")
 
     classifiers_db = {
-        "Naive Bayes": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -l bayes.NaiveBayes -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D) -g 0.7 -m) -s (ArffFileStream -f input_file) -d output_file",
-        "Hoeffding Tree": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D) -g 0.7 -m) -s (ArffFileStream -f input_file) -d output_file",
-        "KNN": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -l (lazy.kNN -k 500 -w 50000) -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D) -g 0.7 -m) -s (ArffFileStream -f input_file) -d output_file",
-        "ABFS-HAT": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -l trees.HoeffdingAdaptiveTree -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D)) -s (ArffFileStream -f input_file) -d output_file",
-        "Perceptron Mask (ANN)": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -l rules.functions.Perceptron -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D)) -s (ArffFileStream -f input_file) -d output_file"
+        "Naive Bayes": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -l bayes.NaiveBayes -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D) -g 0.7 -m) -s (ArffFileStream -f input_file -c target_index) -d output_file",
+        "Hoeffding Tree": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D) -g 0.7 -m) -s (ArffFileStream -f input_file -c target_index) -d output_file",
+        "KNN": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -l (lazy.kNN -k 500 -w 50000) -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D) -g 0.7 -m) -s (ArffFileStream -f input_file -c target_index) -d output_file",
+        "ABFS-HAT": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -l trees.HoeffdingAdaptiveTree -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D)) -s (ArffFileStream -f input_file -c target_index) -d output_file",
+        "Perceptron Mask (ANN)": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -l rules.functions.Perceptron -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D)) -s (ArffFileStream -f input_file -c target_index) -d output_file"
     }
 
     result = {}
 
-    def run(self, moa_jar_path, size_of_jar_path, command, input_path, output_path):
-        args = command.replace("input_file", input_path).replace("output_file", output_path)
+    def run(self, moa_jar_path, size_of_jar_path, command, input_path, output_path, target_index):
+        args = command.replace("input_file", input_path).replace("output_file", output_path).replace("target_index", target_index)
 
         cmd = f'java -cp {moa_jar_path} -javaagent:{size_of_jar_path}  moa.DoTask {args}'
 
@@ -36,7 +36,7 @@ class ABFS():
         process.wait()
         print(process.stdout.read())
 
-    def parameters(self, classifier_name, classifier_parameters, data, target_index):
+    def parameters(self, classifier_name, classifier_parameters, data, target_index='-1'):
         if not os.path.exists(os.path.join(self.this_dir, 'Results')):
             os.makedirs(os.path.join(self.this_dir, 'Results'))
 
@@ -51,7 +51,7 @@ class ABFS():
         shuffle_output_path = os.path.join(self.this_dir, 'Data', 'Shuffle', '{}.arff'.format(dataset_name))
         try:
             self.data_shuffle(input_path=data, output_path=shuffle_output_path)
-            self.run(self.moa_jar, self.sizeofag_jar, self.classifiers_db[classifier_name], shuffle_output_path, output_path)
+            self.run(self.moa_jar, self.sizeofag_jar, self.classifiers_db[classifier_name], shuffle_output_path, output_path, target_index)
             df = pd.read_csv(output_path)
             self.result['avg_acc'] = df['classifications correct (percent)'].mean()
             self.result['evaluation_time'] = df['evaluation time (cpu seconds)'].sum()
