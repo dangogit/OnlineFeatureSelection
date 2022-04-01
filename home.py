@@ -104,6 +104,7 @@ if uploaded_file is not None and run:
         )
         res = FIRES.apply_fires(classifier_name=OL_Algorithm, classifier_parameters=classifier_parameters, data=uploaded_file.name, target_index=target_index)
         print(res)
+
     with hc.HyLoader('', hc.Loaders.pulse_bars):
         time.sleep(10)
         st.write("YEY!")
