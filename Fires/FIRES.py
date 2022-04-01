@@ -188,7 +188,7 @@ def apply_fires(classifier_name, classifier_parameters, data, target_index, epoc
             # Load data as scikit-multiflow FileStream
             # NOTE: FIRES accepts only numeric values. Please one-hot-encode or factorize string/char variables
             # Additionally, we suggest users to normalize all features, e.g. by using scikit-learn's MinMaxScaler()
-            stream = FileStream(os.path.join(this_dir,data), target_idx=target_index)
+            stream = FileStream(os.path.join(this_dir, 'Data', data), target_idx=target_index)
             stream.prepare_for_use()
 
             # Initial fit of the predictive model
@@ -281,6 +281,6 @@ def apply_fires(classifier_name, classifier_parameters, data, target_index, epoc
             # Restart the FileStream
             stream.restart()
 
-    # print(f'Final avg acc score: {sum(final_acc_lst) / len(final_acc_lst)}')
-    # print(f'Final avg stab score: {sum(final_stab_lst) / len(final_stab_lst)}')
-    return [sum(final_acc_lst) / len(final_acc_lst), sum(final_stab_lst) / len(final_stab_lst)]
+    results_dict = {'avg_acc': sum(final_acc_lst) / len(final_acc_lst), 'avg_stab': sum(final_stab_lst) / len(final_stab_lst), 'evaluation_time': ''}
+    return results_dict
+

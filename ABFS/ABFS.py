@@ -32,7 +32,9 @@ class ABFS():
         cmd = f'java -cp {moa_jar_path} -javaagent:{size_of_jar_path}  moa.DoTask {args}'
 
         print(f"Running the command: {cmd}")
-        print(subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE).stdout.read())
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+        process.wait()
+        print(process.stdout.read())
 
     def parameters(self, classifier_name, classifier_parameters, data, target_index):
         if not os.path.exists(os.path.join(self.this_dir, 'Results')):
@@ -41,23 +43,32 @@ class ABFS():
         if not os.path.exists(os.path.join(self.this_dir, 'Data', 'Shuffle')):
             os.makedirs(os.path.join(self.this_dir, 'Data', 'Shuffle'))
 
-        dataset_name = os.path.basename(data)
+        dataset_name = os.path.basename(data).split('.')[0].strip()
 
-        output_path = os.path.join(self.this_dir, 'Results', f"{classifier_name}_{dataset_name}.csv")
+        output_path = os.path.join(self.this_dir, 'Results', f"{dataset_name}.csv")
 
         # Shuffle data:
-        shuffle_output_path = os.path.join(self.this_dir, 'Data', 'Shuffle',
-                                           '{}_{}.arff'.format(dataset_name, classifier_name))
-        self.data_shuffle(input_path=data, output_path=shuffle_output_path)
+        shuffle_output_path = os.path.join(self.this_dir, 'Data', 'Shuffle', '{}.arff'.format(dataset_name))
+        try:
+            self.data_shuffle(input_path=data, output_path=shuffle_output_path)
+            self.run(self.moa_jar, self.sizeofag_jar, self.classifiers_db[classifier_name], shuffle_output_path, output_path)
+            df = pd.read_csv(output_path)
+            self.result['avg_acc'] = df['classifications correct (percent)'].mean()
+            self.result['evaluation_time'] = df['evaluation time (cpu seconds)'].sum()
+            self.result['avg_stab'] = ""
 
-        self.run(self.moa_jar, self.sizeofag_jar, self.classifiers_db[classifier_name], shuffle_output_path, output_path)
-        df = pd.read_csv(output_path)
-        self.result[classifier_name + '-' + dataset_name] = df['classifications correct (percent)'].mean()
-        print(self.result)
+        except Exception as e:
+            print(e)
+        finally:
+            if os.path.isfile(output_path):
+                os.remove(output_path)
+            if os.path.isfile(shuffle_output_path):
+                os.remove(shuffle_output_path)
+        return self.result
 
-        with open(os.path.join(self.this_dir, 'result.csv'), 'w') as f:
-            for key in self.result.keys():
-                f.write("%s, %s\n" % (key, self.result[key]))
+        # with open(os.path.join(self.this_dir, 'result.csv'), 'w') as f:
+        #     for key in self.result.keys():
+        #         f.write("%s, %s\n" % (key, self.result[key]))
 
     def data_shuffle(self, input_path, output_path):
         fid = open(os.path.join(this_dir, 'Data', input_path), "r")
