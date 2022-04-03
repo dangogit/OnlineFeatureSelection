@@ -37,14 +37,14 @@ def reading_dataset():
     return dataset
 
 
-c1, c2, c3 = st.beta_columns(3)
+c1, c2, c3 = st.columns(3)
 with c2:
     st.image('bgu-large.png', width=450, )
 st.title("Final Project in Online Feature Selection, By:")
 st.header("Daniel Goldman, Samuel Benichou and Tom Dugma")
 st.sidebar.header("--------------MENU---------------")
 with st.sidebar.subheader('Upload your file'):
-    uploaded_file = st.sidebar.file_uploader("Please upload a file of type: xlsx, csv", type=["xlsx", "csv","arff"])
+    uploaded_file = st.sidebar.file_uploader("Please upload a file of type: xlsx, csv", type=["xlsx", "csv", "arff"])
 
     OL_Algorithm = st.sidebar.selectbox("Choose OL Algorithm",
                                         ["KNN", "Perceptron Mask (ANN)", "Hoeffding Tree", "Naive Bayes"])
@@ -60,14 +60,14 @@ with st.sidebar.subheader('Upload your file'):
         classifier_parameters['Perceptron Mask (ANN)'] = {'alpha': alpha, 'max_iter': max_iter, 'random_state': random_state}
 
     OFS_Algorithm = st.sidebar.selectbox("Choose OFS Algorithm", ["ABFS", "FIRES"])
-    feature_precent = st.sidebar.number_input("Enter feature precentage between 0.01 - 100", min_value=0.01,
+    feature_precent = st.sidebar.number_input("Enter feature percentage between 0.01 - 100", min_value=0.01,
                                               max_value=100.0)
     batch_size = st.sidebar.number_input("Enter batch size between 1 - 1000", min_value=1, max_value=1000)
-    target_index = st.sidebar.slider("Enter target index", 0, 100)
+    target_index = st.sidebar.slider("Enter target index", -1, 100)
 
-st.subheader("after choosing wanted options and you uploaded the file, click 'RUN' to get results")
+st.subheader("After modifying all parameters and uploading data, click 'RUN' to start evaluation")
 st.write('')
-c1, c2, c3 = st.beta_columns(3)
+c1, c2, c3 = st.columns(3)
 
 m = st.markdown("""
 <style>
@@ -87,8 +87,10 @@ with c2:
     run = st.button("RUN")
 if uploaded_file is not None and run:
     st.write(
-        'beginning calculations... please hold on'
+        'Preparing models...'
     )
+    with hc.HyLoader('', hc.Loaders.pulse_bars):
+        time.sleep(2)
     if OFS_Algorithm == 'ABFS':
         st.write(
             'Running ABFS'
@@ -97,13 +99,20 @@ if uploaded_file is not None and run:
         # print(res)
         abfs = ABFS()
         res = abfs.parameters(classifier_name=OL_Algorithm, classifier_parameters=classifier_parameters, data=uploaded_file.name, target_index=target_index)
-        st.write(res)
     elif OFS_Algorithm == 'FIRES':
         st.write(
             'Running FIRES'
         )
         res = FIRES.apply_fires(classifier_name=OL_Algorithm, classifier_parameters=classifier_parameters, data=uploaded_file.name, target_index=target_index)
-        st.write(res)
-    with hc.HyLoader('', hc.Loaders.pulse_bars):
-        time.sleep(10)
-        st.write("YEY!")
+
+    if res:
+        st.write("Success!")
+        st.write("Results:")
+        if res['evaluation_time']:
+            st.write(f"Evaluation time:  {res['evaluation_time']} seconds")
+        if res['avg_acc']:
+            st.write(f"Average accuracy:  {res['avg_acc']}%")
+        if res['avg_stab']:
+            st.write(f"Average Stability:  {res['avg_stab']}%")
+    else:
+        st.write("Error! please check your parameters and data.")

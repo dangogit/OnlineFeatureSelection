@@ -51,7 +51,7 @@ class ABFS():
         shuffle_output_path = os.path.join(self.this_dir, 'Data', 'Shuffle', '{}.arff'.format(dataset_name))
         try:
             self.data_shuffle(input_path=data, output_path=shuffle_output_path)
-            self.run(self.moa_jar, self.sizeofag_jar, self.classifiers_db[classifier_name], shuffle_output_path, output_path, target_index)
+            self.run(self.moa_jar, self.sizeofag_jar, self.classifiers_db[classifier_name], shuffle_output_path, output_path, str(target_index))
             df = pd.read_csv(output_path)
             self.result['avg_acc'] = df['classifications correct (percent)'].mean()
             self.result['evaluation_time'] = df['evaluation time (cpu seconds)'].sum()
