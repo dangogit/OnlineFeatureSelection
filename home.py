@@ -3,7 +3,6 @@ from ABFS.ABFS import ABFS
 from Fires import FIRES
 import pandas as pd
 import streamlit as st
-import hydralit_components as hc
 import main
 
 st.set_option('deprecation.showPyplotGlobalUse', False)
@@ -89,8 +88,6 @@ if uploaded_file is not None and run:
     st.write(
         'Preparing models...'
     )
-    with hc.HyLoader('', hc.Loaders.pulse_bars):
-        time.sleep(2)
     if OFS_Algorithm == 'ABFS':
         st.write(
             'Running ABFS'
