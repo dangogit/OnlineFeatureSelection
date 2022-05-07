@@ -21,7 +21,7 @@ class ABFS():
         "Hoeffding Tree": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D) -g 0.7 -m) -s (ArffFileStream -f input_file -c target_index) -d output_file",
         "KNN": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -l (lazy.kNN -k 500 -w 50000) -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D) -g 0.7 -m) -s (ArffFileStream -f input_file -c target_index) -d output_file",
         "ABFS-HAT": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -l trees.HoeffdingAdaptiveTree -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D)) -s (ArffFileStream -f input_file -c target_index) -d output_file",
-        "Perceptron Mask (ANN)": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -l rules.functions.Perceptron -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D)) -s (ArffFileStream -f input_file -c target_index) -d output_file"
+        "Perceptron Mask (ANN)": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -l functions.Perceptron -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D)) -s (ArffFileStream -f input_file -c target_index) -d output_file"
     }
 
     result = {}
