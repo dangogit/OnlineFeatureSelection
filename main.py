@@ -12,25 +12,25 @@ moa_jar = "moa-pom.jar"
 sizeofag_jar = "sizeofag-1.0.4.jar"
 
 classifiers_db = {
-    # "NB": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -l bayes.NaiveBayes -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D)) -s (ArffFileStream -f (input_file) -c target_index) -f batch_size -d output_file",
-    # "HT": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D)) -s (ArffFileStream -f (input_file) -c target_index) -f batch_size -d output_file",
-    # "KNN": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -l (lazy.kNN -k 500) -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D)) -s (ArffFileStream -f (input_file) -c target_index) -f batch_size -d output_file",
+    "NB": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -l bayes.NaiveBayes -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D)) -s (ArffFileStream -f (input_file) -c target_index) -f batch_size -d output_file",
+    "HT": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D)) -s (ArffFileStream -f (input_file) -c target_index) -f batch_size -d output_file",
+    "KNN": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -l (lazy.kNN -k 500) -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D)) -s (ArffFileStream -f (input_file) -c target_index) -f batch_size -d output_file",
     "ANN": "EvaluatePrequential -l (meta.featureselection.FeatureSelectionClassifier -l functions.Perceptron -s (newfeatureselection.BoostingSelector2 -g 100 -t 0.05 -D)) -s (ArffFileStream -f (input_file) -c target_index) -f batch_size -d output_file"
 
 }
 
 data_db = {
-    # "covtype": [os.path.join(this_dir, 'Data', 'expirement', "covtype_2_vs_all.arff"), -1],
-    # "Electricity": [os.path.join(this_dir, 'Data', 'expirement', "electricity_data.arff"), -1],
-    # "df_madelon": [os.path.join(this_dir, 'Data', 'expirement', "df_madelon.arff"), 0],
+    "covtype": [os.path.join(this_dir, 'Data', 'expirement', "covtype_2_vs_all.arff"), -1],
+    "Electricity": [os.path.join(this_dir, 'Data', 'expirement', "electricity_data.arff"), -1],
+    "df_madelon": [os.path.join(this_dir, 'Data', 'expirement', "df_madelon.arff"), 0],
     "SPAM": [os.path.join(this_dir, 'Data', 'expirement', "df_spambase_sample.arff"), -1],
-    # "Poker_Hand": [os.path.join(this_dir, 'Data', 'expirement', 'poker_9_vs_all.arff'), -1],
+    "Poker_Hand": [os.path.join(this_dir, 'Data', 'expirement', 'poker_9_vs_all.arff'), -1],
     "HAR": [os.path.join(this_dir, 'Data', 'expirement', 'df_har.arff'), 0],
-    # "Dota": [os.path.join(this_dir, 'Data', 'expirement', 'df_dota.arff'), 0],
-    # "Gisette": [os.path.join(this_dir, 'Data', 'expirement', 'df_gisette.arff'), 0],
-    # "KDD": [os.path.join(this_dir, 'Data', 'expirement', 'df_kdd.arff'), -1],
-    # "RTG": [os.path.join(this_dir, 'Data', 'expirement', 'df_rtg.arff'), 0],
-    # "MNIST": [os.path.join(this_dir, 'Data', 'expirement', 'df_mnist.arff'), 0],
+    "Dota": [os.path.join(this_dir, 'Data', 'expirement', 'df_dota.arff'), 0],
+    "Gisette": [os.path.join(this_dir, 'Data', 'expirement', 'df_gisette.arff'), 0],
+    "KDD": [os.path.join(this_dir, 'Data', 'expirement', 'df_kdd.arff'), -1],
+    "RTG": [os.path.join(this_dir, 'Data', 'expirement', 'df_rtg.arff'), 0],
+    "MNIST": [os.path.join(this_dir, 'Data', 'expirement', 'df_mnist.arff'), 0],
 
     # "10_KDD99":[os.path.join(this_dir, 'Data', '10kdd.arff'), 118],
     # "Spam_Assassin_SCorpus":[os.path.join(this_dir, 'Data', 'corpus_data.arff'), 39916]
@@ -92,20 +92,19 @@ def run_simulations1(num_of_tests):
                             res_time = df['evaluation time (cpu seconds)'].sum()
                             total_time += res_time
                             total_acc += res_acc
+                            result[f"{classifier}_{dataset_name}_acc_{batch_size}"] = res_acc
+                            result[f"{classifier}_{dataset_name}_time_{batch_size}"] = res_time
                         else:
                             print(f"timeout for {classifier}_{dataset_name}_{batch_size}")
-
-                        result[f"{classifier}_{dataset_name}_acc_{batch_size}"] = res_acc
-                        result[f"{classifier}_{dataset_name}_time_{batch_size}"] = res_time
                     except Exception as e:
                         print(e)
-                    try:
-                        result[f"{classifier}_{dataset_name}_acc_avg"] = total_acc / 4
-                        result[f"{classifier}_{dataset_name}_time_avg"] = total_time / 4
-                        result[f"{classifier}_{dataset_name}_num_of_features"] = df['# of features selected'].max()
+                try:
+                    result[f"{classifier}_{dataset_name}_acc_avg"] = total_acc / 4
+                    result[f"{classifier}_{dataset_name}_time_avg"] = total_time / 4
+                    result[f"{classifier}_{dataset_name}_num_of_features"] = df['# of features selected'].max()
 
-                    except Exception as e:
-                        print(e)
+                except Exception as e:
+                    print(e)
 
                 print(result)
 
