@@ -5,3 +5,6 @@ matplotlib==3.5.1
 psutil==5.9.0
 arff==0.9
 scikit-multiflow==0.5.3
+scikit-learn~=1.0.2
+scipy~=1.7.3
+streamlit~=1.8.0
