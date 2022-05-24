@@ -1,9 +1,15 @@
 import time
+
+import matplotlib.pyplot as plt
+
 from ABFS.ABFS import ABFS
 from Fires import FIRES
 import pandas as pd
 import streamlit as st
+import altair as alt
+
 import main
+import utils
 
 st.set_option('deprecation.showPyplotGlobalUse', False)
 st.set_page_config(page_title="Final Project", page_icon="🔍", layout="wide")
@@ -45,6 +51,7 @@ st.sidebar.header("--------------MENU---------------")
 with st.sidebar.subheader('Upload your file'):
     uploaded_file = st.sidebar.file_uploader("Please upload a file of type: xlsx, csv", type=["xlsx", "csv", "arff"])
 
+    OFS_Algorithm = st.sidebar.selectbox("Choose OFS Algorithm", ["ABFS", "FIRES"])
     OL_Algorithm = st.sidebar.selectbox("Choose OL Algorithm",
                                         ["KNN", "Perceptron Mask (ANN)", "Hoeffding Tree", "Naive Bayes"])
     classifier_parameters = {}
@@ -58,7 +65,6 @@ with st.sidebar.subheader('Upload your file'):
         random_state = st.sidebar.slider("select random state", 0, 100)
         classifier_parameters['Perceptron Mask (ANN)'] = {'alpha': alpha, 'max_iter': max_iter, 'random_state': random_state}
 
-    OFS_Algorithm = st.sidebar.selectbox("Choose OFS Algorithm", ["ABFS", "FIRES"])
     feature_precent = st.sidebar.number_input("Enter feature percentage between 0.01 - 100", min_value=0.01,
                                               max_value=100.0)
     batch_size = st.sidebar.number_input("Enter batch size between 1 - 1000", min_value=1, max_value=1000)
@@ -92,8 +98,6 @@ if uploaded_file is not None and run:
         st.write(
             'Running ABFS'
         )
-        # res = main.run_main()
-        # print(res)
         abfs = ABFS()
         res = abfs.parameters(classifier_name=OL_Algorithm, classifier_parameters=classifier_parameters, data=uploaded_file.name, target_index=target_index)
     elif OFS_Algorithm == 'FIRES':
@@ -111,5 +115,30 @@ if uploaded_file is not None and run:
             st.write(f"Average accuracy:  {res['avg_acc']}%")
         if res['avg_stab']:
             st.write(f"Average Stability:  {res['avg_stab']}%")
+        for key in res.keys():
+            if not res[key]:
+                res[key] = 0
+
+        st.subheader('Display Results')
+        try:
+            df = pd.DataFrame.from_dict(res, orient='index')
+            df = df.rename({0: 'Value'}, axis='columns')
+            df.reset_index(inplace=True)
+            df = df.rename(columns={'index': 'Type'})
+            st.write(df)
+            ### 4. Display Bar Chart using Altair
+            st.subheader('Display Bar chart')
+            p = alt.Chart(df).mark_bar().encode(
+                x='Type',
+                y='Value'
+            )
+            p = p.properties(
+                width=alt.Step(150),
+                height=alt.Step(150)
+            )
+            st.write(p)
+        except Exception as e:
+            print(e)
     else:
         st.write("Error! please check your parameters and data.")
+
