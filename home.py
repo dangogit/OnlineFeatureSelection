@@ -1,14 +1,9 @@
-import time
-
-import matplotlib.pyplot as plt
-
+import os
 from ABFS.ABFS import ABFS
 from Fires import FIRES
 import pandas as pd
 import streamlit as st
 import altair as alt
-
-import main
 import utils
 
 st.set_option('deprecation.showPyplotGlobalUse', False)
@@ -31,42 +26,37 @@ hide_streamlit_style = """
             """
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
-
-@st.cache(allow_output_mutation=True, persist=True)
-def reading_dataset():
-    global dataset
-    try:
-        dataset = pd.read_excel(uploaded_file)
-    except ValueError:
-        dataset = pd.read_csv(uploaded_file)
-    return dataset
-
-
+# body
 c1, c2, c3 = st.columns(3)
 with c2:
-    st.image('bgu-large.png', width=450, )
+    st.image(os.path.join('resources', 'bgu-large.png'), width=450, )
 st.title("Final Project in Online Feature Selection, By:")
 st.header("Daniel Goldman, Samuel Benichou and Tom Dugma")
 st.sidebar.header("--------------MENU---------------")
 with st.sidebar.subheader('Upload your file'):
-    uploaded_file = st.sidebar.file_uploader("Please upload a file of type: xlsx, csv", type=["xlsx", "csv", "arff"])
+    uploaded_file = st.sidebar.file_uploader("Please upload a file of type: arff, csv", type=["csv", "arff"])
+    if uploaded_file:
+        file_path = utils.save_uploaded_file(uploaded_file)
+    else:
+        st.write("Please upload a file")
+
+    data_shuffle = st.sidebar.checkbox("Data Shuffle")
 
     OFS_Algorithm = st.sidebar.selectbox("Choose OFS Algorithm", ["ABFS", "FIRES"])
     OL_Algorithm = st.sidebar.selectbox("Choose OL Algorithm",
                                         ["KNN", "Perceptron Mask (ANN)", "Hoeffding Tree", "Naive Bayes"])
     classifier_parameters = {}
     if OL_Algorithm == "KNN":
-        n_neighbors = st.sidebar.slider("select size of K", 0, 10)
-        leaf_size = st.sidebar.slider("select size of leaf size", 0, 100)
+        n_neighbors = st.sidebar.slider("select size of K", 0, 500)
+        leaf_size = st.sidebar.slider("select size of leaf size", 0, 50000)
         classifier_parameters['KNN'] = {'n_neighbors': n_neighbors, 'leaf_size': leaf_size}
     elif OL_Algorithm == "Perceptron Mask (ANN)":
-        alpha = st.sidebar.slider("select size of alpha", 0.001, 0.99)
+        alpha = st.sidebar.slider("select size of alpha", 0.01, 0.99)
         max_iter = st.sidebar.slider("select max num of iterations", 1, 1000)
         random_state = st.sidebar.slider("select random state", 0, 100)
-        classifier_parameters['Perceptron Mask (ANN)'] = {'alpha': alpha, 'max_iter': max_iter, 'random_state': random_state}
+        classifier_parameters['Perceptron Mask (ANN)'] = {'alpha': alpha, 'max_iter': max_iter,
+                                                          'random_state': random_state}
 
-    feature_precent = st.sidebar.number_input("Enter feature percentage between 0.01 - 100", min_value=0.01,
-                                              max_value=100.0)
     batch_size = st.sidebar.number_input("Enter batch size between 1 - 1000", min_value=1, max_value=1000)
     target_index = st.sidebar.slider("Enter target index", -1, 100)
 
@@ -94,27 +84,38 @@ if uploaded_file is not None and run:
     st.write(
         'Preparing models...'
     )
+    res = None
     if OFS_Algorithm == 'ABFS':
-        st.write(
-            'Running ABFS'
-        )
-        abfs = ABFS()
-        res = abfs.parameters(classifier_name=OL_Algorithm, classifier_parameters=classifier_parameters, data=uploaded_file.name, target_index=target_index)
+        if uploaded_file.name.endswith('arff'):
+            st.write(
+                'Running ABFS'
+            )
+            abfs = ABFS()
+            res = abfs.run_abfs(classifier_name=OL_Algorithm, classifier_parameters=classifier_parameters,
+                                data=file_path, target_index=target_index, data_shuffle=data_shuffle,
+                                batch_size=batch_size)
+        else:
+            st.write("ABFS support only arff file formats.")
     elif OFS_Algorithm == 'FIRES':
-        st.write(
-            'Running FIRES'
-        )
-        res = FIRES.apply_fires(classifier_name=OL_Algorithm, classifier_parameters=classifier_parameters, data=uploaded_file.name, target_index=target_index)
-
+        if uploaded_file.name.endswith('csv'):
+            st.write(
+                'Running FIRES'
+            )
+            res = FIRES.apply_fires(classifier_name=OL_Algorithm, classifier_parameters=classifier_parameters,
+                                    data=file_path, target_index=target_index, batch_size=batch_size)
+        else:
+            st.write("Fires support only csv file formats.")
     if res:
         st.write("Success!")
         st.write("Results:")
-        if res['evaluation_time']:
+        if 'evaluation_time' in res:
             st.write(f"Evaluation time:  {res['evaluation_time']} seconds")
-        if res['avg_acc']:
+        if 'avg_acc' in res:
             st.write(f"Average accuracy:  {res['avg_acc']}%")
-        if res['avg_stab']:
+        if 'avg_stab' in res:
             st.write(f"Average Stability:  {res['avg_stab']}%")
+        if 'num_of_features' in res:
+            st.write(f"Num Of Features: {res['num_of_features']}")
         for key in res.keys():
             if not res[key]:
                 res[key] = 0
@@ -141,4 +142,3 @@ if uploaded_file is not None and run:
             print(e)
     else:
         st.write("Error! please check your parameters and data.")
-
