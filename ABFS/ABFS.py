@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from utils import data_shuffle, run_moa_subprocess
+from utils import shuffle_data, run_moa_subprocess, home_dir
 
 
 class ABFS():
@@ -9,9 +9,10 @@ class ABFS():
         """
         ABFS class constructor
         """
+        self.home_dir = home_dir
         self.result = {}
 
-    def run_abfs(self, classifier_name, classifier_parameters, data, batch_size, target_index='-1', shuffle=False):
+    def run_abfs(self, classifier_name, classifier_parameters, data, batch_size, target_index='-1', data_shuffle=False):
         """
         This method generates ABFS paths and runs moa with selected parameters
         :param classifier_name: name of the classifier ["Naive Bayes", "Hoeffding Tree", "KNN", "Perceptron Mask (ANN)"]
@@ -19,21 +20,21 @@ class ABFS():
         :param data: the data path 
         :param batch_size: size of the batch
         :param target_index: the index of the class column
-        :param shuffle: True/False if data shuffle is needed
+        :param data_shuffle: True/False if data shuffle is needed
         :return: (dict) {'avg_acc': "", 'avg_stab': "", 'num_of_features': ""}
         """
-        if not os.path.exists(os.path.join(self.this_dir, 'Results')):
-            os.makedirs(os.path.join(self.this_dir, 'Results'))
+        if not os.path.exists(os.path.join(self.home_dir, 'Results')):
+            os.makedirs(os.path.join(self.home_dir, 'Results'))
 
         dataset_name = os.path.basename(data).split('.')[0].strip()
-        output_path = os.path.join(self.this_dir, 'Results', f"{dataset_name}.csv")
+        output_path = os.path.join(self.home_dir, 'Results', f"{dataset_name}.csv")
 
         try:
-            if shuffle:
-                if not os.path.exists(os.path.join(self.this_dir, 'Data', 'Shuffle')):
-                    os.makedirs(os.path.join(self.this_dir, 'Data', 'Shuffle'))
-                input_path = os.path.join(self.this_dir, 'Data', 'Shuffle', '{}.arff'.format(dataset_name))
-                data_shuffle(input_path=data, output_path=input_path)
+            if data_shuffle:
+                if not os.path.exists(os.path.join(self.home_dir, 'Data', 'Shuffle')):
+                    os.makedirs(os.path.join(self.home_dir, 'Data', 'Shuffle'))
+                input_path = os.path.join(self.home_dir, 'Data', 'Shuffle', '{}.arff'.format(dataset_name))
+                shuffle_data(input_path=data, output_path=input_path)
             else:
                 input_path = data
 
@@ -42,7 +43,7 @@ class ABFS():
                 df = pd.read_csv(output_path)
                 self.result['avg_acc'] = df['classifications correct (percent)'].mean()
                 self.result['evaluation_time'] = df['evaluation time (cpu seconds)'].sum()
-                self.result['num_of_features'] = df['# of features selected'].max()
+                self.result['num_of_features'] = int(df['# of features selected'].max())
             else:
                 print(f"Failed to run {classifier_name}_{dataset_name}_{batch_size}")
 
