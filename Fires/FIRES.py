@@ -4,7 +4,6 @@ from skmultiflow.trees import HoeffdingTreeClassifier
 from skmultiflow.data import FileStream
 from skmultiflow.neural_networks import PerceptronMask
 from sklearn.metrics import accuracy_score
-
 import numpy as np
 from warnings import warn
 from scipy.stats import norm
@@ -13,7 +12,7 @@ import warnings
 import sys
 import os
 import time
-from main import this_dir
+from moa_runner import this_dir
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import stability
@@ -127,7 +126,7 @@ class FIRES:
                 # Gradients
                 nabla_mu = norm.pdf(y / rho * dot_mu_x) * (y / rho * x.T)
                 nabla_sigma = norm.pdf(y / rho * dot_mu_x) * (
-                            - y / (2 * rho ** 3) * 2 * (x ** 2 * self.sigma).T * dot_mu_x)
+                        - y / (2 * rho ** 3) * 2 * (x ** 2 * self.sigma).T * dot_mu_x)
 
                 # Marginal Likelihood
                 marginal = norm.cdf(y / rho * dot_mu_x)
@@ -175,115 +174,123 @@ class FIRES:
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-batch_sizes = [25, 50, 75, 100]
 fractions = [0.1, 0.15, 0.2]
 
 
-def apply_fires(classifier_name, classifier_parameters, data, target_index, epochs=1):
+def apply_fires(classifier_name, classifier_parameters, data, target_index, batch_size, epochs=1):
+    """
+    This method runs the fires algorithm with selected parameters
+    :param classifier_name: name of the classifier ["Naive Bayes", "Hoeffding Tree", "KNN", "Perceptron Mask (ANN)"]
+    :param classifier_parameters: specific parameters for the classifier
+    :param data: the data path
+    :param batch_size: size of the batch
+    :param target_index: the index of the class column
+    :param epochs: number of epochs
+    :return: (dict) {'avg_acc': "", 'avg_stab': "", 'evaluation_time': ""}
+    """
     final_stab_lst = []
     final_acc_lst = []
     evaluation_time = []
 
-    for batch_size in batch_sizes:
-        for frac_selected_ftr in fractions:
-            start_time = time.time()
-            # Load data as scikit-multiflow FileStream
-            # NOTE: FIRES accepts only numeric values. Please one-hot-encode or factorize string/char variables
-            # Additionally, we suggest users to normalize all features, e.g. by using scikit-learn's MinMaxScaler()
-            stream = FileStream(os.path.join(this_dir, 'Data', data), target_idx=target_index)
-            stream.prepare_for_use()
+    for frac_selected_ftr in fractions:
+        start_time = time.time()
+        # Load data as scikit-multiflow FileStream
+        # NOTE: FIRES accepts only numeric values. Please one-hot-encode or factorize string/char variables
+        # Additionally, we suggest users to normalize all features, e.g. by using scikit-learn's MinMaxScaler()
+        stream = FileStream(os.path.join(this_dir, 'Data', data), target_idx=target_index)
+        stream.prepare_for_use()
 
-            # Initial fit of the predictive model
+        # Initial fit of the predictive model
 
+        predictor = GaussianNB()
+
+        if classifier_name == "KNN":
+            predictor = KNNClassifier(n_neighbors=classifier_parameters[classifier_name]['n_neighbors'],
+                                      leaf_size=classifier_parameters[classifier_name]['leaf_size'])
+        elif classifier_name == "Perceptron Mask (ANN)":
+            predictor = PerceptronMask(alpha=classifier_parameters[classifier_name]['alpha'],
+                                       max_iter=classifier_parameters[classifier_name]['max_iter'],
+                                       random_state=classifier_parameters[classifier_name]['random_state'])
+        elif classifier_name == "Hoeffding Tree":
+            predictor = HoeffdingTreeClassifier()
+        elif classifier_name == "Naive Bayes":
             predictor = GaussianNB()
+        else:
+            print(f"Classifier {classifier_name} not supported. running default classifier (NB)")
 
-            if classifier_name == "KNN":
-                predictor = KNNClassifier(n_neighbors=classifier_parameters[classifier_name]['n_neighbors'], leaf_size=classifier_parameters[classifier_name]['leaf_size'])
-            elif classifier_name == "Perceptron Mask (ANN)":
-                predictor = PerceptronMask(alpha=classifier_parameters[classifier_name]['alpha'], max_iter=classifier_parameters[classifier_name]['max_iter'], random_state=classifier_parameters[classifier_name]['random_state'])
-            elif classifier_name == "Hoeffding Tree":
-                predictor = HoeffdingTreeClassifier()
-            elif classifier_name == "Naive Bayes":
-                predictor = GaussianNB()
-            else:
-                print(f"Classifier {classifier_name} not supported.")
+        x, y = stream.next_sample(batch_size=batch_size)
+        predictor.partial_fit(x, y, stream.target_values)
 
+        # Initialize FIRES
+        fires_model = FIRES(n_total_ftr=stream.n_features,  # Total no. of features
+                            target_values=stream.target_values,  # Unique target values (class labels)
+                            mu_init=0,  # Initial importance parameter
+                            sigma_init=1,  # Initial uncertainty parameter
+                            penalty_s=0.01,
+                            # Penalty factor for the uncertainty (corresponds to gamma_s in the paper)
+                            penalty_r=0.01,
+                            # Penalty factor for the regularization (corresponds to gamma_r in the paper)
+                            epochs=epochs,
+                            # No. of epochs that we use each batch of observations to update the parameters
+                            lr_mu=0.01,  # Learning rate for the gradient update of the importance
+                            lr_sigma=0.01,  # Learning rate for the gradient update of the uncertainty
+                            scale_weights=True,  # If True, scale feature weights into the range [0,1]
+                            model='probit')  # Name of the base model to compute the likelihood
+
+        # Variables for calculating the average accuracy and stability per time step
+        n_selected_ftr = round(frac_selected_ftr * stream.n_features)
+        sum_acc, sum_stab, count_time_steps, stability_mat = 0, 0, 0, []
+        stability_counter = 0
+        start_window, end_window = 0, 9
+
+        while stream.has_more_samples():
+            # Load a new sample
             x, y = stream.next_sample(batch_size=batch_size)
-            predictor.partial_fit(x, y, stream.target_values)
 
-            # Initialize FIRES
-            fires_model = FIRES(n_total_ftr=stream.n_features,  # Total no. of features
-                                target_values=stream.target_values,  # Unique target values (class labels)
-                                mu_init=0,  # Initial importance parameter
-                                sigma_init=1,  # Initial uncertainty parameter
-                                penalty_s=0.01,
-                                # Penalty factor for the uncertainty (corresponds to gamma_s in the paper)
-                                penalty_r=0.01,
-                                # Penalty factor for the regularization (corresponds to gamma_r in the paper)
-                                epochs=epochs,
-                                # No. of epochs that we use each batch of observations to update the parameters
-                                lr_mu=0.01,  # Learning rate for the gradient update of the importance
-                                lr_sigma=0.01,  # Learning rate for the gradient update of the uncertainty
-                                scale_weights=True,  # If True, scale feature weights into the range [0,1]
-                                model='probit')  # Name of the base model to compute the likelihood
+            # Select features
+            ftr_weights = fires_model.weigh_features(x, y)  # Get feature weights with FIRES
+            ftr_selection = np.argsort(ftr_weights)[::-1][:n_selected_ftr]
 
-            # Variables for calculating the average accuracy and stability per time step
-            n_selected_ftr = round(frac_selected_ftr * stream.n_features)
-            sum_acc, sum_stab, count_time_steps, stability_mat = 0, 0, 0, []
-            stability_counter = 0
-            start_window, end_window = 0, 9
+            # Truncate x (retain only selected features, 'remove' all others, e.g. by replacing them with 0)
+            x_reduced = np.zeros(x.shape)
+            x_reduced[:, ftr_selection] = x[:, ftr_selection]
 
-            while stream.has_more_samples():
-                # Load a new sample
-                x, y = stream.next_sample(batch_size=batch_size)
+            # Prepare x to stability
+            x_binary = np.zeros(stream.n_features)
+            x_binary[ftr_selection] = 1
+            stability_mat.append(x_binary)
 
-                # Select features
-                ftr_weights = fires_model.weigh_features(x, y)  # Get feature weights with FIRES
-                ftr_selection = np.argsort(ftr_weights)[::-1][:n_selected_ftr]
+            # Test
+            y_pred = predictor.predict(x_reduced)
+            acc_score = accuracy_score(y, y_pred)
 
-                # Truncate x (retain only selected features, 'remove' all others, e.g. by replacing them with 0)
-                x_reduced = np.zeros(x.shape)
-                x_reduced[:, ftr_selection] = x[:, ftr_selection]
+            # Sum all the accuracy scores
+            sum_acc = sum_acc + acc_score
 
-                # Prepare x to stability
-                x_binary = np.zeros(stream.n_features)
-                x_binary[ftr_selection] = 1
-                stability_mat.append(x_binary)
+            # Sum all the stabilty scores (shifting window = 10)
+            if len(stability_mat) >= 10:
+                sum_stab = sum_stab + stability.getStability(stability_mat[start_window:end_window])
+                # print(stability.getStability(stability_mat[start_window:end_window]))
+                start_window += 1
+                end_window += 1
+                stability_counter += 1
 
-                # Test
-                y_pred = predictor.predict(x_reduced)
-                acc_score = accuracy_score(y, y_pred)
-                # print(acc_score)
+            # Sum the time steps
+            count_time_steps += 1
 
-                # Sum all the accuracy scores
-                sum_acc = sum_acc + acc_score
+            # Train
+            predictor.partial_fit(x_reduced, y)
 
-                # Sum all the stabilty scores (shifting window = 10)
-                if len(stability_mat) >= 10:
-                    sum_stab = sum_stab + stability.getStability(stability_mat[start_window:end_window])
-                    # print(stability.getStability(stability_mat[start_window:end_window]))
-                    start_window += 1
-                    end_window += 1
-                    stability_counter += 1
+        # Average accuracy  and stability
+        avg_acc = sum_acc / count_time_steps
+        avg_stab = sum_stab / (stability_counter)
 
-                # Sum the time steps
-                count_time_steps += 1
+        final_stab_lst.append(avg_stab)
+        final_acc_lst.append(avg_acc)
+        evaluation_time.append(time.time() - start_time)
+        # Restart the FileStream
+        stream.restart()
 
-                # Train
-                predictor.partial_fit(x_reduced, y)
-
-            # Average accuracy  and stability
-            avg_acc = sum_acc / count_time_steps
-            avg_stab = sum_stab / (stability_counter)
-            # print(f'avg acc score: {avg_acc}')
-            # print(f'stability score: {avg_stab}')
-
-            final_stab_lst.append(avg_stab)
-            final_acc_lst.append(avg_acc)
-            evaluation_time.append(time.time() - start_time)
-            # Restart the FileStream
-            stream.restart()
-
-    results_dict = {'avg_acc': sum(final_acc_lst) / len(final_acc_lst), 'avg_stab': sum(final_stab_lst) / len(final_stab_lst), 'evaluation_time': sum(evaluation_time)}
+    results_dict = {'avg_acc': sum(final_acc_lst) / len(final_acc_lst),
+                    'avg_stab': sum(final_stab_lst) / len(final_stab_lst), 'evaluation_time': sum(evaluation_time)}
     return results_dict
-

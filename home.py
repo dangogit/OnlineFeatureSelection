@@ -1,14 +1,10 @@
-import time
-
-import matplotlib.pyplot as plt
-
+import os
 from ABFS.ABFS import ABFS
 from Fires import FIRES
 import pandas as pd
 import streamlit as st
 import altair as alt
-
-import main
+from scipy.io.arff import loadarff
 import utils
 
 st.set_option('deprecation.showPyplotGlobalUse', False)
@@ -34,30 +30,45 @@ st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 @st.cache(allow_output_mutation=True, persist=True)
 def reading_dataset():
+    """
+    The function reads the datasets into a pandas dataframe
+    :return: pands.DataFrame
+    """
     global dataset
     try:
-        dataset = pd.read_excel(uploaded_file)
-    except ValueError:
-        dataset = pd.read_csv(uploaded_file)
-    return dataset
+        if uploaded_file.endswith('xlsx'):
+            dataset = pd.read_excel(uploaded_file)
+        elif uploaded_file.endswith('csv'):
+            pd.read_csv(uploaded_file)
+        elif uploaded_file.endswith('arff'):
+            raw_data = loadarff('Training Dataset.arff')
+            dataset = pd.DataFrame(raw_data[0])
+        else:
+            st.write("Error! file extension not supported")
+        return dataset
+
+    except Exception as e:
+        st.write(str(e))
 
 
+# body
 c1, c2, c3 = st.columns(3)
 with c2:
-    st.image('bgu-large.png', width=450, )
+    st.image(os.path.join('resources', 'bgu-large.png'), width=450, )
 st.title("Final Project in Online Feature Selection, By:")
 st.header("Daniel Goldman, Samuel Benichou and Tom Dugma")
 st.sidebar.header("--------------MENU---------------")
 with st.sidebar.subheader('Upload your file'):
     uploaded_file = st.sidebar.file_uploader("Please upload a file of type: xlsx, csv", type=["xlsx", "csv", "arff"])
+    data_shuffle = st.checkbox("Data Shuffle")
 
     OFS_Algorithm = st.sidebar.selectbox("Choose OFS Algorithm", ["ABFS", "FIRES"])
     OL_Algorithm = st.sidebar.selectbox("Choose OL Algorithm",
                                         ["KNN", "Perceptron Mask (ANN)", "Hoeffding Tree", "Naive Bayes"])
     classifier_parameters = {}
     if OL_Algorithm == "KNN":
-        n_neighbors = st.sidebar.slider("select size of K", 0, 10)
-        leaf_size = st.sidebar.slider("select size of leaf size", 0, 100)
+        n_neighbors = st.sidebar.slider("select size of K", 0, 500)
+        leaf_size = st.sidebar.slider("select size of leaf size", 0, 50000)
         classifier_parameters['KNN'] = {'n_neighbors': n_neighbors, 'leaf_size': leaf_size}
     elif OL_Algorithm == "Perceptron Mask (ANN)":
         alpha = st.sidebar.slider("select size of alpha", 0.001, 0.99)
@@ -99,12 +110,12 @@ if uploaded_file is not None and run:
             'Running ABFS'
         )
         abfs = ABFS()
-        res = abfs.parameters(classifier_name=OL_Algorithm, classifier_parameters=classifier_parameters, data=uploaded_file.name, target_index=target_index)
+        res = abfs.run_abfs(classifier_name=OL_Algorithm, classifier_parameters=classifier_parameters, data=uploaded_file.name, target_index=target_index, data_shuffle=data_shuffle, batch_size=batch_size)
     elif OFS_Algorithm == 'FIRES':
         st.write(
             'Running FIRES'
         )
-        res = FIRES.apply_fires(classifier_name=OL_Algorithm, classifier_parameters=classifier_parameters, data=uploaded_file.name, target_index=target_index)
+        res = FIRES.apply_fires(classifier_name=OL_Algorithm, classifier_parameters=classifier_parameters, data=uploaded_file.name, target_index=target_index, batch_size=batch_size)
 
     if res:
         st.write("Success!")
