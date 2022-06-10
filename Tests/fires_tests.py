@@ -1,24 +1,17 @@
 import unittest
-import Fires
+from Fires import FIRES
 
 class TestFiresMethods(unittest.TestCase):
+    # Fires class test
+    def test_apply_fires_without_data(self):
+        with self.assertRaises(ValueError):
+            FIRES.apply_fires(classifier_name="Naive Bayes", classifier_parameters={},
+                              data="", target_index=0, batch_size=100)
 
     def test_apply_fires(self):
-
-
-    def test_upper(self):
-        self.assertEqual('foo'.upper(), 'FOO')
-
-    def test_isupper(self):
-        self.assertTrue('FOO'.isupper())
-        self.assertFalse('Foo'.isupper())
-
-    def test_split(self):
-        s = 'hello world'
-        self.assertEqual(s.split(), ['hello', 'world'])
-        # check that s.split fails when the separator is not a string
-        with self.assertRaises(TypeError):
-            s.split(2)
+        with self.assertRaises(FileNotFoundError):
+            FIRES.apply_fires(classifier_name="Naive Bayes", classifier_parameters={},
+                              data="Data/Fires/covtype_5_vs_all.csv", target_index=0, batch_size=100)
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(exit=False)

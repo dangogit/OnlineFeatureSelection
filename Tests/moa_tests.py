@@ -1,20 +1,20 @@
 import unittest
+from ABFS.ABFS import ABFS
 
 class TestMoaMethods(unittest.TestCase):
+    # Moa class test
+    def test_ABFS(self):
+        abfs = ABFS()
+        abfs.run_abfs(classifier_name="Naive Bayes", classifier_parameters={},
+                            data="Data/spambase.arff", target_index=0, data_shuffle=False,
+                            batch_size=50)
 
-    def test_upper(self):
-        self.assertEqual('foo'.upper(), 'FOO')
-
-    def test_isupper(self):
-        self.assertTrue('FOO'.isupper())
-        self.assertFalse('Foo'.isupper())
-
-    def test_split(self):
-        s = 'hello world'
-        self.assertEqual(s.split(), ['hello', 'world'])
-        # check that s.split fails when the separator is not a string
-        with self.assertRaises(TypeError):
-            s.split(2)
+    def test_ABFS_without_data(self):
+        abfs = ABFS()
+        res = abfs.run_abfs(classifier_name="Naive Bayes", classifier_parameters={},
+                            data="", target_index=0, data_shuffle=True,
+                            batch_size=50)
+        self.assertEqual({}, res)
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(exit=False)
