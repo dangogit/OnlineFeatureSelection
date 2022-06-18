@@ -17,7 +17,7 @@ class ABFS():
         This method generates ABFS paths and runs moa with selected parameters
         :param classifier_name: name of the classifier ["Naive Bayes", "Hoeffding Tree", "KNN", "Perceptron Mask (ANN)"]
         :param classifier_parameters: specific parameters for the classifier
-        :param data: the data path 
+        :param data: the data path
         :param batch_size: size of the batch
         :param target_index: the index of the class column
         :param data_shuffle: True/False if data shuffle is needed
